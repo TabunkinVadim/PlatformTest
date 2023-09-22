@@ -53,37 +53,21 @@ struct CharacterModel: Decodable {
         url = try container.decode(String.self, forKey: .url)
         created = try container.decode(String.self, forKey: .created)
     }
+
+    init (from characterCoreModel : CharacterCoreModel) {
+        self.id = Int(characterCoreModel.id)
+        self.name = characterCoreModel.name!
+        self.status = characterCoreModel.status!
+        self.species = characterCoreModel.species!
+        self.type = ""
+        self.gender = characterCoreModel.gender!
+        self.origin = [:]
+        self.location = [:]
+        self.imageURL = ""
+        self.image = UIImage(data: characterCoreModel.image!)!
+        self.episode = []
+        self.url = ""
+        self.created = ""
+
+    }
 }
-
-
-
-//{
-//    "id": 1,
-//    "name": "Rick Sanchez",
-//    "status": "Alive",
-//    "species": "Human",
-//    "type": "",
-//    "gender": "Male",
-
-//    "origin": {
-//      "name": "Earth (C-137)",
-//      "url": "https://rickandmortyapi.com/api/location/1"
-//    },
-
-//    "location": {
-//      "name": "Earth (Replacement Dimension)",
-//      "url": "https://rickandmortyapi.com/api/location/20"
-//    },
-
-//    "image": "https://rickandmortyapi.com/api/character/avatar/1.jpeg",
-
-//    "episode": [
-//      "https://rickandmortyapi.com/api/episode/1",
-//      "https://rickandmortyapi.com/api/episode/2",
-//      // ...
-//    ],
-
-//    "url": "https://rickandmortyapi.com/api/character/1",
-
-//    "created": "2017-11-04T18:48:46.250Z"
-//  }

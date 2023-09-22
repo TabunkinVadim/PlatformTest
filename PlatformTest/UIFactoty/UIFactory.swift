@@ -31,8 +31,8 @@ class UIFactory {
         return {
             $0.toAutoLayout()
             $0.numberOfLines = 0
-//            $0.attributedText = NSMutableAttributedString(string: lable!, attributes: [NSAttributedString.Key.kern: 0.18])
-            $0.font = UIFont(name: "Bold", size: textSize)
+            $0.font = UIFont.boldSystemFont(ofSize: textSize)
+            $0.text = lable
             $0.textColor = textColor
             $0.textAlignment = textAlignment
             return $0
@@ -41,12 +41,10 @@ class UIFactory {
 
     func addRegularTextLable(lable: String?, textColor: UIColor, textSize: CGFloat, textAlignment: NSTextAlignment) -> UILabel {
         return {
-//            let paragraphStyle = NSMutableParagraphStyle()
-//            paragraphStyle.lineHeightMultiple = lineHeightMultiple
+            $0.font = UIFont.systemFont(ofSize: textSize)
             $0.toAutoLayout()
             $0.numberOfLines = 0
-//            $0.attributedText = NSMutableAttributedString(string: lable!,  attributes: [NSAttributedString.Key.kern: 0.12, NSAttributedString.Key.paragraphStyle: paragraphStyle])
-            $0.font = UIFont(name: "Regular", size: textSize)
+            $0.text = lable
             $0.textColor = textColor
             $0.textAlignment = textAlignment
             return $0

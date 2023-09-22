@@ -8,7 +8,7 @@
 import UIKit
 
 class TableViewCell: UITableViewCell {
-    private let image = UIFactory().addImage(imageNamed: "",
+    private let image = UIFactory().addImage(imageNamed: "image",
                                              cornerRadius: 0,
                                              borderWidth: 0,
                                              borderColor: nil,
@@ -18,13 +18,13 @@ class TableViewCell: UITableViewCell {
                                              backgroundColor: nil)
 
     private let name = UIFactory().addBoldTextLable(lable: "",
-                                                    textColor: .black,
-                                                    textSize: 14,
+                                                    textColor: .textColor,
+                                                    textSize: 15,
                                                     textAlignment: .left)
 
     private let about = UIFactory().addRegularTextLable(lable: "",
-                                                        textColor: .systemGray2,
-                                                        textSize: 10,
+                                                        textColor: .statusTextColor,
+                                                        textSize: 15,
                                                         textAlignment: .left)
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -41,7 +41,7 @@ class TableViewCell: UITableViewCell {
         self.name.text = name
         self.about.text = about
     }
-
+    
     private func layout() {
         contentView.addSubviews(image, name, about)
 
@@ -52,7 +52,7 @@ class TableViewCell: UITableViewCell {
             image.heightAnchor.constraint(equalToConstant: 60),
             image.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
-
+        
         NSLayoutConstraint.activate([
             name.topAnchor.constraint(equalTo: image.topAnchor, constant: 8),
             name.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 16),

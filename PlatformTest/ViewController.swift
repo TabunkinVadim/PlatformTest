@@ -9,33 +9,69 @@ import UIKit
 
 class ViewController: UIViewController {
 
-
     var loadMoreStatus = false
-    var characters: [CharacterModel] = []
+    var isLoadFromCoreData = false
+    var characters: [CharacterModel] = [] {didSet {
+        print("\n \n Save!! \n \n")
+        saveInCoreData()
+    }}
+
     lazy var tableView: UITableView = {
         $0.toAutoLayout()
         $0.dataSource = self
         $0.delegate = self
-        $0.backgroundColor = .white
+        $0.backgroundColor = .backgroundColor
         $0.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.identifier)
         return $0
     }(UITableView(frame: .zero, style: .grouped))
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .white
+        title = "Rick & Morty"
+        self.view.backgroundColor = .backgroundColor
         layout()
-        requestUrl(chracter: 1)
-
     }
 
-    func requestUrl(chracter:Int) {
+    func saveInCoreData() {
+        for character in characters {
+            let coreDataCoordinator = CoreDataCoordinator()
+            coreDataCoordinator.seveCharacter(character: character)
+        }
+    }
+
+    func loadFromCoreData (error: NSError?) {
+        if !self.isLoadFromCoreData {
+            self.isLoadFromCoreData = true
+            self.errorAlert(title: "Error", buttomTitle: "OK", error: error) { _ in
+                let coreDataCoordinator = CoreDataCoordinator()
+                let countCharacter = coreDataCoordinator.getCharactersCount()
+                if countCharacter > 0{
+                    for characterID in 0...countCharacter-1 {
+                        guard let character = coreDataCoordinator.getCharacter(characterID: characterID) else {return}
+                        let ch = CharacterModel(from: character)
+                        self.characters.append(ch)
+                        self.tableView.reloadData()
+                    }
+                }
+            }
+        }
+        self.loadMoreStatus = false
+    }
+
+    func requestUrl(character:Int) {
         if !loadMoreStatus {
             self.loadMoreStatus = true
-            guard let url = URL(string: "https://rickandmortyapi.com/api/character/\(chracter)" ) else { return}
+            guard let url = URL(string: "https://rickandmortyapi.com/api/character/\(character)" ) else { return}
             let sessions = URLSession.shared
             let task = sessions.dataTask(with: url ){data, response, error in
-                guard let data = data else { return }
+                guard let data = data else {
+
+                    let error = error as? NSError
+                    DispatchQueue.main.async {
+                        self.loadFromCoreData(error: error)
+                    }
+                    return }
+
                 do {
                     var character = try JSONDecoder().decode(CharacterModel.self, from: data)
                     guard let url = URL(string: character.imageURL ) else { return}
@@ -43,10 +79,14 @@ class ViewController: UIViewController {
                     let task = sessions.dataTask(with: url ){data, response, error in
                         guard let data = data else { return }
                         do {
+                            let coreDataCoordinator = CoreDataCoordinator()
+                            coreDataCoordinator.clearAllCoreData()
                             guard let image = UIImage(data: (data)) else {
+                                self.loadMoreStatus = false
                                 return}
                             character.image = image
                             self.characters.append(character)
+                            print("\n \n Clear!! \n \n")
                             DispatchQueue.main.async {
                                 self.tableView.reloadData()
                                 self.loadMoreStatus = false
@@ -54,25 +94,33 @@ class ViewController: UIViewController {
                         }
                     }
                     task.resume()
-                    //                }
                 } catch let error  {
-                    print(error)
+                    DispatchQueue.main.async {
+                        self.errorAlert(title: "Error", buttomTitle: "OK", error: error) { _ in
+                        }
+                        self.loadMoreStatus = false
+                    }
                 }
             }
             task.resume()
         }
-
     }
 
-    //    func loadMore() {
-    //        if !loadMoreStatus  {
-    //            self.loadMoreStatus = true
-    //            requestUrl(chracter: characters.count)
-    //                self.loadMoreStatus = false
-    //                self.tableView.reloadData()
-    //            }
-    //
-    //    }
+    func errorAlert (title: String, buttomTitle: String, error: Error?, cancelAction:((UIAlertAction) -> Void)?) {
+        var alertStyle = UIAlertController.Style.actionSheet
+        if (UIDevice.current.userInterfaceIdiom == .pad) {
+            alertStyle = UIAlertController.Style.alert
+        }
+        let alert: UIAlertController = {
+            if let error = error {
+                $0.message = error.localizedDescription
+            } else { $0.message = "UnknownError" }
+            return $0
+        }(UIAlertController(title: title, message: "UnknownError" , preferredStyle: alertStyle))
+
+        alert.addAction(UIAlertAction(title: buttomTitle, style: .cancel, handler: cancelAction))
+        navigationController?.present(alert, animated: true)
+    }
 
     private func layout() {
         view.addSubview(tableView)
@@ -94,7 +142,7 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
         let deltaOffset = maximumOffset - currentOffset
         if deltaOffset <= 0 {
         }
-        requestUrl(chracter: characters.count+1)
+        requestUrl(character: characters.count+1)
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -110,47 +158,19 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
                        name: characters[indexPath.row].name,
                        about: characters[indexPath.row].species)
         return cell
-
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
         1
     }
 
-    //    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-    //        if section == 0 {
-    //            header.setProfileHeader(nickName: user.nickName, name: user.fullName, avatar: user.avatar, profession: user.profession, numberOfPublications: user.numberOfPublications, numberOfScribes: user.numberOfScribes, numberOfSubscriptions: user.numberOfSubscriptions, isFriend: self.isFriend)
-    //        }
-    //        return header
-    //    }
-
-    //    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-    //        if section == 0 {
-    //            if isFriend {
-    //                return 250
-    //            } else  {
-    //                return 360
-    //            }
-    //        } else {
-    //            return 0
-    //        }
-    //    }
-
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        var autiHeight:CGFloat {
-            UITableView.automaticDimension
-        }
-        return autiHeight
+        return 76
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.section == 0{
-            //            coordinator?.photoVC(user: self.user, isFriend: isFriend)
-            //            feedCoordinator?.photoVC(user: self.user, isFriend: isFriend)
-
-        } else {
-            //            coordinator?.PostVC(post: self.user.userPosts[indexPath.row], user: self.user)
-            //            feedCoordinator?.PostVC(post: self.user.userPosts[indexPath.row], user: self.user)
-        }
+        let vc = DescriptionViewController()
+        vc.setDescription(avatar: self.characters[indexPath.row].image, name: self.characters[indexPath.row].name, status: self.characters[indexPath.row].status, species: self.characters[indexPath.row].species, gender: self.characters[indexPath.row].gender)
+        navigationController?.present(vc, animated: true, completion: .none)
     }
 }
