@@ -58,51 +58,20 @@ class ViewController: UIViewController {
         self.loadMoreStatus = false
     }
 
-    func requestUrl(character:Int) {
+
+    func network (character: Int) {
         if !loadMoreStatus {
-            self.loadMoreStatus = true
-            guard let url = URL(string: "https://rickandmortyapi.com/api/character/\(character)" ) else { return}
-            let sessions = URLSession.shared
-            let task = sessions.dataTask(with: url ){data, response, error in
-                guard let data = data else {
-
-                    let error = error as? NSError
-                    DispatchQueue.main.async {
-                        self.loadFromCoreData(error: error)
-                    }
-                    return }
-
-                do {
-                    var character = try JSONDecoder().decode(CharacterModel.self, from: data)
-                    guard let url = URL(string: character.imageURL ) else { return}
-                    let sessions = URLSession.shared
-                    let task = sessions.dataTask(with: url ){data, response, error in
-                        guard let data = data else { return }
-                        do {
-                            let coreDataCoordinator = CoreDataCoordinator()
-                            coreDataCoordinator.clearAllCoreData()
-                            guard let image = UIImage(data: (data)) else {
-                                self.loadMoreStatus = false
-                                return}
-                            character.image = image
-                            self.characters.append(character)
-                            print("\n \n Clear!! \n \n")
-                            DispatchQueue.main.async {
-                                self.tableView.reloadData()
-                                self.loadMoreStatus = false
-                            }
-                        }
-                    }
-                    task.resume()
-                } catch let error  {
-                    DispatchQueue.main.async {
-                        self.errorAlert(title: "Error", buttomTitle: "OK", error: error) { _ in
-                        }
-                        self.loadMoreStatus = false
-                    }
+            loadMoreStatus = true
+            let network = NetworkServise()
+            network.requestUrl(character: character) { error in
+                self.loadFromCoreData(error: error as NSError?)
+            } action: { character in
+                self.characters.append(character)
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.loadMoreStatus = false
                 }
             }
-            task.resume()
         }
     }
 
@@ -142,7 +111,7 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
         let deltaOffset = maximumOffset - currentOffset
         if deltaOffset <= 0 {
         }
-        requestUrl(character: characters.count+1)
+        network(character: characters.count+1)
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
